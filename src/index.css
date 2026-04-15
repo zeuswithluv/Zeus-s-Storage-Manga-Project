@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #1abc9c; /* Default fallback */
+  --color-primary-dark: #16a085; /* Default fallback */
+  /* Default Dark Theme */
+  --bg-app: #0a0a0a;
+  --text-app: #f3f4f6;
+  --border-app: #1f1f1f;
+  --card-app: #141414;
+  --sidebar-app: #0a0a0a;
+  --scrollbar-track: #0a0a0a;
+  --scrollbar-thumb: #333333;
+}
+
+html.light {
+  color-scheme: light;
+  --bg-app: #ffffff;
+  --text-app: #111827;
+  --border-app: #e5e7eb;
+  --card-app: #f9fafb;
+  --sidebar-app: #ffffff;
+  --scrollbar-track: #f9fafb;
+  --scrollbar-thumb: #d1d5db;
+}
+
+html.neutral {
+  color-scheme: dark;
+  --bg-app: #1a1b1e;
+  --text-app: #f3f4f6;
+  --border-app: #373a40;
+  --card-app: #25262b;
+  --sidebar-app: #1a1b1e;
+  --scrollbar-track: #1a1b1e;
+  --scrollbar-thumb: #374151;
+}
+
+html.dark {
+  color-scheme: dark;
+  --bg-app: #000000;
+  --text-app: #ffffff;
+  --border-app: #111111;
+  --card-app: #0a0a0a;
+  --sidebar-app: #000000;
+  --scrollbar-track: #000000;
+  --scrollbar-thumb: #222222;
+}
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-primary-dark: var(--color-primary-dark);
+}
+
+@layer base {
+  body {
+    background-color: var(--bg-app);
+    color: var(--text-app);
+    @apply font-sans transition-colors duration-300 antialiased;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+/* Mobile Performance Optimizations */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+.manga-card-hover {
+  @apply transition-all duration-300;
+  content-visibility: auto;
+  contain-intrinsic-size: 200px 300px;
+}
+
+@media (min-width: 1024px) {
+  .manga-card-hover:hover {
+    @apply scale-105 shadow-xl shadow-[#1abc9c]/20;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background-color: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+  @apply rounded-full hover:bg-primary/50 transition-colors;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-800/50 rounded-full;
+}

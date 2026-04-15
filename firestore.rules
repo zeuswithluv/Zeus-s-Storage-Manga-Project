@@ -1,0 +1,125 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        // Thay thế email này bằng email Admin của bạn (Ví dụ: "admin@gmail.com")
+        (request.auth.token.email == "hlam82532@gmail.com" && request.auth.token.email_verified == true);
+    }
+
+    function isValidManga(data) {
+      return data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.author is string && data.author.size() > 0 && data.author.size() < 100 &&
+             data.coverUrl is string && data.coverUrl.matches("^https?://.*") &&
+             data.authorUid == request.auth.uid &&
+             (!('description' in data) || (data.description is string && data.description.size() < 5000)) &&
+             (!('status' in data) || data.status in ['Ongoing', 'Completed', 'Hiatus', 'Dropped']) &&
+             (!('genres' in data) || (data.genres is list && data.genres.size() <= 10));
+    }
+
+    function isMangaOwner(mangaId) {
+      return isAdmin() || isOwner(get(/databases/$(database)/documents/mangas/$(mangaId)).data.authorUid);
+    }
+
+    function isValidChapter(data, mangaId) {
+      return data.mangaId == mangaId &&
+             data.number is number &&
+             (!('sortOrder' in data) || data.sortOrder is number) &&
+             data.pages is list && data.pages.size() > 0 && data.pages.size() <= 200;
+    }
+
+    function isValidComment(data, mangaId) {
+      return data.mangaId == mangaId &&
+             data.uid == request.auth.uid &&
+             data.content is string && data.content.size() > 0 && data.content.size() < 1000;
+    }
+
+    function isValidRating(data) {
+      return data.uid == request.auth.uid &&
+             data.score is number && data.score >= 1 && data.score <= 5;
+    }
+
+    match /mangas/{mangaId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidManga(request.resource.data);
+      allow update: if isAuthenticated() && (
+        (isOwner(resource.data.authorUid) && isValidManga(request.resource.data)) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasAny(['rating', 'ratingCount', 'ratingSum', 'followerCount', 'viewCount']))
+      );
+      allow delete: if isAuthenticated() && isOwner(resource.data.authorUid);
+
+      match /chapters/{chapterId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isValidChapter(request.resource.data, mangaId) && isMangaOwner(mangaId);
+        allow update: if isAuthenticated() && isValidChapter(request.resource.data, mangaId) && isMangaOwner(mangaId);
+        allow delete: if isAuthenticated() && (isMangaOwner(mangaId) || isAdmin());
+      }
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if isAuthenticated() && isValidComment(request.resource.data, mangaId);
+        allow update: if isAuthenticated() && isOwner(resource.data.uid) && isValidComment(request.resource.data, mangaId);
+        allow delete: if isAuthenticated() && (isOwner(resource.data.uid) || isMangaOwner(mangaId));
+      }
+    }
+
+    match /follows/{followId} {
+      allow read: if isAuthenticated() && (resource == null || resource.data.uid == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.uid == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.uid == request.auth.uid;
+    }
+
+    match /ratings/{ratingId} {
+      allow read: if true;
+      allow create: if isAuthenticated() && isValidRating(request.resource.data);
+      allow update: if isAuthenticated() && isOwner(resource.data.uid) && isValidRating(request.resource.data);
+      allow delete: if isAuthenticated() && isOwner(resource.data.uid);
+    }
+
+    // Collection Group rules for Admin Stats
+    match /{path=**}/chapters/{chapterId} {
+      allow read: if true;
+    }
+
+    match /{path=**}/comments/{commentId} {
+      allow read: if true;
+      allow delete: if isAdmin();
+    }
+
+    match /{path=**}/follows/{followId} {
+      allow read: if isAdmin();
+    }
+
+    match /{path=**}/ratings/{ratingId} {
+      allow read: if true;
+    }
+
+    match /settings/team {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /settings/system {
+      allow read: if true;
+      allow create, update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['pageViews', 'lastVisit']) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /presence/{userId} {
+      allow read: if isAdmin();
+      allow write: if isAuthenticated() && request.auth.uid == userId;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

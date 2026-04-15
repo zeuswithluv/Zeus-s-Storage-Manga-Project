@@ -1,0 +1,120 @@
+{
+  "entities": {
+    "Manga": {
+      "title": "Manga",
+      "description": "Thông tin về bộ truyện",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "description": "Tên truyện" },
+        "author": { "type": "string", "description": "Tác giả" },
+        "description": { "type": "string", "description": "Mô tả" },
+        "coverUrl": { "type": "string", "description": "Link ảnh bìa" },
+        "backgroundUrl": { "type": "string", "description": "Link ảnh nền" },
+        "status": { "type": "string", "enum": ["Ongoing", "Completed", "Hiatus", "Dropped"] },
+        "publisherUrl": { "type": "string", "description": "Link nhà xuất bản" },
+        "authorUrl": { "type": "string", "description": "Link tác giả" },
+        "genres": { "type": "array", "items": { "type": "string" }, "description": "Thể loại" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Ngày cập nhật" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Ngày tạo" },
+        "commentCount": { "type": "number", "description": "Số lượng bình luận" },
+        "viewCount": { "type": "number", "description": "Số lượt xem" },
+        "followerCount": { "type": "number", "description": "Số người theo dõi" },
+        "rating": { "type": "number", "description": "Đánh giá trung bình" },
+        "ratingCount": { "type": "number", "description": "Tổng số lượt đánh giá" },
+        "ratingSum": { "type": "number", "description": "Tổng số sao đã đánh giá" },
+        "authorUid": { "type": "string", "description": "UID của người đăng" }
+      },
+      "required": ["title", "author", "coverUrl", "authorUid"]
+    },
+    "Chapter": {
+      "title": "Chapter",
+      "description": "Thông tin về chương truyện",
+      "type": "object",
+      "properties": {
+        "mangaId": { "type": "string", "description": "ID của truyện" },
+        "number": { "type": "number", "description": "Số chương" },
+        "sortOrder": { "type": "number", "description": "Thứ tự sắp xếp thủ công" },
+        "title": { "type": "string", "description": "Tên chương" },
+        "pages": { "type": "array", "items": { "type": "string" }, "description": "Danh sách link ảnh trang truyện" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Ngày tạo" }
+      },
+      "required": ["mangaId", "number", "pages"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Bình luận của người dùng",
+      "type": "object",
+      "properties": {
+        "mangaId": { "type": "string", "description": "ID của truyện" },
+        "uid": { "type": "string", "description": "UID của người bình luận" },
+        "userName": { "type": "string", "description": "Tên người dùng" },
+        "userPhoto": { "type": "string", "description": "Ảnh đại diện" },
+        "content": { "type": "string", "description": "Nội dung bình luận" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Ngày tạo" }
+      },
+      "required": ["mangaId", "uid", "content"]
+    },
+    "Follow": {
+      "title": "Follow",
+      "description": "Thông tin theo dõi truyện của người dùng",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID của người dùng" },
+        "mangaId": { "type": "string", "description": "ID của truyện" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Ngày theo dõi" }
+      },
+      "required": ["uid", "mangaId"]
+    },
+    "Rating": {
+      "title": "Rating",
+      "description": "Đánh giá của người dùng cho bộ truyện",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "UID của người dùng" },
+        "mangaId": { "type": "string", "description": "ID của truyện" },
+        "score": { "type": "number", "description": "Số sao đánh giá (1-5)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Ngày đánh giá" }
+      },
+      "required": ["uid", "mangaId", "score"]
+    },
+    "TeamInfo": {
+      "title": "TeamInfo",
+      "description": "Thông tin liên hệ của nhóm dịch",
+      "type": "object",
+      "properties": {
+        "facebook": { "type": "string", "description": "Link Facebook" },
+        "discord": { "type": "string", "description": "Link Discord" },
+        "telegram": { "type": "string", "description": "Link Telegram" },
+        "website": { "type": "string", "description": "Link Website khác" },
+        "donateQR": { "type": "string", "description": "Link ảnh QR Donate" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Ngày cập nhật" }
+      }
+    }
+  },
+  "firestore": {
+    "/mangas/{mangaId}": {
+      "schema": "Manga",
+      "description": "Bộ sưu tập truyện"
+    },
+    "/mangas/{mangaId}/chapters/{chapterId}": {
+      "schema": "Chapter",
+      "description": "Các chương của một bộ truyện"
+    },
+    "/mangas/{mangaId}/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Bình luận của một bộ truyện"
+    },
+    "/follows/{followId}": {
+      "schema": "Follow",
+      "description": "Các bộ truyện người dùng theo dõi"
+    },
+    "/ratings/{ratingId}": {
+      "schema": "Rating",
+      "description": "Đánh giá truyện của người dùng"
+    },
+    "/settings/team": {
+      "schema": "TeamInfo",
+      "description": "Thông tin nhóm dịch"
+    }
+  }
+}
