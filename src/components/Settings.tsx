@@ -717,6 +717,37 @@ export const SettingsPage = () => {
 
         {isAdmin && (
           <div className="space-y-10">
+            {/* Cảnh báo chi phí */}
+            <div className="p-5 bg-orange-500/10 border border-orange-500/20 rounded-2xl">
+              <div className="flex items-center gap-3 text-orange-500 font-bold mb-3">
+                <AlertTriangle size={20} />
+                <span>Cảnh báo Chi phí & Quota</span>
+              </div>
+              <p className="text-xs text-gray-400 leading-relaxed mb-4">
+                Vì ứng dụng sử dụng các dịch vụ của Google (Firebase), để đảm bảo <strong>không phát sinh chi phí</strong>: 
+                Vui lòng không nâng cấp lên gói <strong>Blaze</strong> trong Firebase Console trừ khi thực sự cần thiết. 
+                Hệ thống hiện tại chạy hoàn toàn trên các định mức miễn phí.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <a 
+                  href="https://console.firebase.google.com/project/_/usage/details" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-orange-500/20 text-orange-500 rounded-lg text-[10px] font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center gap-2"
+                >
+                  Kiểm tra hạn mức <ExternalLink size={12} />
+                </a>
+                <a 
+                  href="https://console.firebase.google.com/project/_/billing/usage" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="px-3 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-[10px] font-bold hover:text-white transition-all flex items-center gap-2"
+                >
+                  Quản lý Thanh toán <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+
             <div>
               <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
                 <Activity size={20} className="text-primary" />
