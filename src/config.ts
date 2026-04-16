@@ -18,7 +18,7 @@ export const APP_CONFIG = {
   
   // 3. Cấu hình Admin
   // Thay email này bằng email Google của bạn để có quyền Admin
-  adminEmail: import.meta.env.VITE_ADMIN_EMAIL || "hlam82532@gmail.com",
+  adminEmail: import.meta.env.VITE_ADMIN_EMAIL || "admin@example.com",
   
   // 4. Chặn địa lý (Geo-blocking)
   // Danh sách các mã quốc gia muốn chặn (VD: 'VN', 'KR', 'JP'...)

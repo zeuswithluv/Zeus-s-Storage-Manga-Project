@@ -6,5 +6,4 @@ coverage/
 *.log
 .env*
 !.env.example
-# firebase-applet-config.json (Bỏ comment nếu muốn bảo mật, hiện tại bỏ để sync lên GitHub)
-# firebase-applet-config.json
+firebase-applet-config.json

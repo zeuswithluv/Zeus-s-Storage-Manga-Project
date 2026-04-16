@@ -12,7 +12,7 @@ service cloud.firestore {
     function isAdmin() {
       return isAuthenticated() &&
         // Thay thế email này bằng email Admin của bạn (Ví dụ: "admin@gmail.com")
-        (request.auth.token.email == "hlam82532@gmail.com" && request.auth.token.email_verified == true);
+        (request.auth.token.email == "admin@example.com" && request.auth.token.email_verified == true);
     }
 
     function isValidManga(data) {

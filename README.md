@@ -67,11 +67,17 @@
 
 ---
 
-## 🛠️ Cấu trúc dự án (Dành cho Developer)
-- `/src/components`: Chứa toàn bộ giao diện (Reader, Upload, MangaDetail...).
-- `/src/firebase.ts`: Cấu hình kết nối Database.
-- `/src/App.tsx`: Quản lý định tuyến (Routing) và Auth.
-- `firestore.rules`: Quy tắc bảo mật cho Database (Hãy nạp vào Firebase để bảo vệ dữ liệu).
+## 🛠️ Cấu trúc dự án (Project Structure)
+- `/api`: Vercel Serverless Functions.
+- `/functions`: Cloudflare Pages Functions.
+- `/public`: Thư mục chứa tài sản tĩnh (Ảnh, Icon, ...).
+- `/src/components`: Chứa toàn bộ giao diện người dùng.
+- `/src/services`: Các dịch vụ kết nối API bên ngoài (ImgBB, ...).
+- `/src/firebase.ts`: Cấu hình SDK và kết nối Database.
+- `/src/App.tsx`: Quản lý định tuyến và trạng thái ứng dụng.
+- `firestore.rules`: Quy tắc bảo mật Firestore.
+- `firebase-blueprint.json`: Sơ đồ cấu trúc dữ liệu ứng dụng.
+- `wrangler.jsonc`: Cấu hình cho Cloudflare Pages.
 
 ---
 
