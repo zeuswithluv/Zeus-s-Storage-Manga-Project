@@ -109,34 +109,63 @@ const applyTheme = (theme: Theme) => {
   }
 };
 
-// Geo Blocking Component
-const GeoGuard = ({ children }: { children: React.ReactNode }) => {
+// Access Guard Component
+const AccessGuard = ({ children }: { children: React.ReactNode }) => {
   const [isBlocked, setIsBlocked] = useState<boolean | null>(null);
+  const [blockReason, setBlockReason] = useState<'geo' | 'ip' | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkLocation = async () => {
+    const checkAccess = async () => {
       try {
-        // Using ipapi.co for free geolocation check
+        // 1. Get Client IP via serverless proxy
+        let clientIp = '';
+        try {
+          const ipRes = await fetch('/api/ip');
+          if (ipRes.ok) {
+            const { ip } = await ipRes.json();
+            clientIp = ip;
+          }
+        } catch (e) {
+          console.warn('Backend IP API not available, using fallback.');
+        }
+
+        if (clientIp) {
+          // 2. Check Firestore for specific IP ban
+          const ipDocId = clientIp.replace(/\./g, '_').replace(/:/g, '_');
+          const ipSnap = await getDoc(doc(db, 'blocked_ips', ipDocId));
+          
+          if (ipSnap.exists()) {
+            setBlockReason('ip');
+            setIsBlocked(true);
+            setLoading(false);
+            return;
+          }
+        }
+
+        // 3. Geo Blocking (Always run as secondary check)
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json() as any;
         
+        // If we didn't get IP from our API, use the one from geo API
+        if (!clientIp) clientIp = data.ip;
+
         const blockedCountries = APP_CONFIG.blockedCountries;
         if (blockedCountries.length > 0 && blockedCountries.includes(data.country_code)) {
+          setBlockReason('geo');
           setIsBlocked(true);
         } else {
           setIsBlocked(false);
         }
       } catch (error) {
-        console.error('Geo check failed:', error);
-        // If check fails, we allow access by default to avoid blocking legitimate users
+        console.error('Access check failed:', error);
         setIsBlocked(false);
       } finally {
         setLoading(false);
       }
     };
 
-    checkLocation();
+    checkAccess();
   }, []);
 
   if (loading) {
@@ -149,7 +178,7 @@ const GeoGuard = ({ children }: { children: React.ReactNode }) => {
 
   if (isBlocked) {
     return (
-      <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-app)] flex flex-col items-center justify-center p-8 text-center">
+      <div className="min-h-screen bg-[var(--bg-app)] text-[var(--text-app)] flex flex-col items-center justify-center p-8 text-center uppercase tracking-tighter">
         <motion.div 
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
@@ -158,12 +187,15 @@ const GeoGuard = ({ children }: { children: React.ReactNode }) => {
           <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
             <ShieldAlert size={48} className="text-red-500" />
           </div>
-          <h1 className="text-3xl font-black tracking-tight">Truy cập bị hạn chế</h1>
-          <p className="text-gray-400 leading-relaxed">
-            Rất tiếc, dịch vụ {APP_CONFIG.appName} hiện không khả dụng tại khu vực của bạn ({APP_CONFIG.blockedCountries.join(', ')}) do chính sách bản quyền và quy định khu vực.
+          <h1 className="text-3xl font-black">{blockReason === 'ip' ? 'BẠN ĐÃ BỊ KHÓA TRUY CẬP' : 'TRUY CẬP BỊ HẠN CHẾ'}</h1>
+          <p className="text-gray-400 leading-relaxed font-bold normal-case">
+            {blockReason === 'ip' 
+              ? "Địa chỉ IP của bạn đã bị hệ thống ghi nhận có hành vi bất thường hoặc spam. Vui lòng liên hệ quản trị viên nếu bạn cho rằng đây là một sự nhầm lẫn."
+              : `Rất tiếc, dịch vụ ${APP_CONFIG.appName} hiện không khả dụng tại khu vực của bạn (${APP_CONFIG.blockedCountries.join(', ')}) do chính sách bản quyền và quy định khu vực.`
+            }
           </p>
           <div className="pt-8 border-t border-[var(--border-app)]">
-            <p className="text-xs text-gray-500 uppercase tracking-widest font-bold">{APP_CONFIG.appName} Security System</p>
+            <p className="text-xs text-gray-500 tracking-widest font-bold font-mono">SYSTEM_CODE: {blockReason?.toUpperCase()}_BAN</p>
           </div>
         </motion.div>
       </div>
@@ -617,7 +649,7 @@ export default function App() {
 
   return (
     <AuthContext.Provider value={{ user, loading, isAdmin, errors, clearErrors, onlineCount }}>
-      <GeoGuard>
+      <AccessGuard>
         <div className="flex min-h-screen bg-[var(--bg-app)] text-[var(--text-app)]">
           <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
           
@@ -796,7 +828,7 @@ export default function App() {
           </motion.button>
           <BackToTop />
         </div>
-      </GeoGuard>
+      </AccessGuard>
     </AuthContext.Provider>
   );
 }

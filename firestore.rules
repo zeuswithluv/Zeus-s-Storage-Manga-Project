@@ -118,6 +118,11 @@ service cloud.firestore {
       allow write: if isAuthenticated() && request.auth.uid == userId;
     }
 
+    match /blocked_ips/{ipId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

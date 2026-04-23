@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, Monitor, Check, Key, Save, AlertCircle, Users, Facebook, Send, MessageCircle, Globe, BarChart3, Book, Layers, MessageSquare, Trash2, ShieldCheck, RefreshCw, Loader2, Activity, AlertTriangle, HardDrive, Zap, ExternalLink } from 'lucide-react';
+import { Sun, Moon, Monitor, Check, Key, Save, AlertCircle, Users, Facebook, Send, MessageCircle, Globe, BarChart3, Book, Layers, MessageSquare, Trash2, ShieldCheck, ShieldX, Plus, RefreshCw, Loader2, Activity, AlertTriangle, HardDrive, Zap, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { useAuth, Theme } from '../App';
 import { APP_CONFIG } from '../config';
-import { db, doc, getDoc, setDoc, serverTimestamp, collection, getCountFromServer, collectionGroup, getDocs, writeBatch, query, orderBy, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
+import { db, doc, getDoc, setDoc, deleteDoc, serverTimestamp, collection, getCountFromServer, collectionGroup, getDocs, writeBatch, query, orderBy, onSnapshot, handleFirestoreError, OperationType } from '../firebase';
 
 const SystemMonitor = () => {
   const { errors, clearErrors, onlineCount } = useAuth();
@@ -251,6 +251,8 @@ const SpamManager = () => {
   const [result, setResult] = useState<{ scanned: number, deleted: number } | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: 'duplicates' | 'spam', title: string, desc: string } | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const [blockedIps, setBlockedIps] = useState<any[]>([]);
+  const [newIp, setNewIp] = useState('');
 
   useEffect(() => {
     if (successMessage) {
@@ -258,6 +260,38 @@ const SpamManager = () => {
       return () => clearTimeout(timer);
     }
   }, [successMessage]);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, 'blocked_ips'), (snapshot) => {
+      setBlockedIps(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const handleBlockIp = async () => {
+    if (!newIp) return;
+    try {
+      const sanitizedIp = newIp.trim().replace(/\./g, '_').replace(/:/g, '_');
+      await setDoc(doc(db, 'blocked_ips', sanitizedIp), {
+        ip: newIp.trim(),
+        createdAt: serverTimestamp(),
+        reason: 'Manual Block'
+      });
+      setNewIp('');
+      setSuccessMessage('Đã khóa IP thành công!');
+    } catch (error) {
+      console.error("Error blocking IP:", error);
+    }
+  };
+
+  const handleUnblockIp = async (id: string) => {
+    try {
+      await deleteDoc(doc(db, 'blocked_ips', id));
+      setSuccessMessage('Đã mở khóa IP!');
+    } catch (error) {
+      console.error("Error unblocking IP:", error);
+    }
+  };
 
   const cleanDuplicates = async () => {
     setConfirmAction(null);
@@ -348,7 +382,50 @@ const SpamManager = () => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* IP Block Section */}
+      <div className="p-4 bg-red-500/5 border border-red-500/10 rounded-2xl space-y-4">
+        <div className="flex items-center gap-2 text-red-500 mb-2">
+          <ShieldX size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-tighter">Quản lý Chặn IP</h3>
+        </div>
+        
+        <div className="flex gap-2">
+          <input 
+            type="text"
+            value={newIp}
+            onChange={(e) => setNewIp(e.target.value)}
+            placeholder="Nhập địa chỉ IP cần khóa..."
+            className="flex-1 bg-black/50 border border-gray-800 rounded-xl px-4 py-2 text-xs focus:outline-none focus:border-red-500 transition-all font-mono"
+          />
+          <button 
+            onClick={handleBlockIp}
+            className="p-2 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
+
+        <div className="space-y-2 max-h-40 overflow-y-auto custom-scrollbar pr-1">
+          {blockedIps.length === 0 ? (
+            <p className="text-[10px] text-gray-600 italic text-center py-4">Chưa có IP nào bị khóa.</p>
+          ) : (
+            blockedIps.map(item => (
+              <div key={item.id} className="flex items-center justify-between p-2 bg-black/30 rounded-lg border border-white/5">
+                <span className="text-[10px] font-mono text-gray-300">{item.ip}</span>
+                <button 
+                  onClick={() => handleUnblockIp(item.id)}
+                  className="p-1 text-gray-500 hover:text-red-500 transition-colors"
+                  title="Gỡ khóa"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button 
           onClick={() => setConfirmAction({
