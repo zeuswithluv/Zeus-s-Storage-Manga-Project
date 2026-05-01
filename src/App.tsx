@@ -48,6 +48,7 @@ import {
   auth, 
   db, 
   doc, 
+  getDoc,
   signIn, 
   logOut, 
   onAuthStateChanged, 
@@ -123,8 +124,8 @@ const AccessGuard = ({ children }: { children: React.ReactNode }) => {
         try {
           const ipRes = await fetch('/api/ip');
           if (ipRes.ok) {
-            const { ip } = await ipRes.json();
-            clientIp = ip;
+            const data = await ipRes.json() as { ip: string };
+            clientIp = data.ip;
           }
         } catch (e) {
           console.warn('Backend IP API not available, using fallback.');

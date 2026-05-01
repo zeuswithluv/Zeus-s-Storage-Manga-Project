@@ -264,6 +264,8 @@ const SpamManager = () => {
   useEffect(() => {
     const unsubscribe = onSnapshot(collection(db, 'blocked_ips'), (snapshot) => {
       setBlockedIps(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'blocked_ips');
     });
     return () => unsubscribe();
   }, []);
