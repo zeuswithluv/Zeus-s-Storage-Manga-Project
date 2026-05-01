@@ -44,7 +44,19 @@ export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
 
 // Auth Helpers
-export const signIn = () => signInWithPopup(auth, googleProvider);
+export const signIn = async () => {
+  try {
+    return await signInWithPopup(auth, googleProvider);
+  } catch (error: any) {
+    console.error("Login failed:", error);
+    if (error.code === 'auth/unauthorized-domain') {
+       alert("Lỗi: Tên miền này chưa được xác thực trong Firebase Console.\n\nHướng dẫn: Truy cập Firebase Console -> Auth -> Settings -> Authorized Domains và thêm tên miền của bạn vào.");
+    } else {
+       alert("Lỗi đăng nhập: " + (error.message || "Không rõ nguyên nhân"));
+    }
+    throw error;
+  }
+};
 export const logOut = () => signOut(auth);
 
 // Error Handling
