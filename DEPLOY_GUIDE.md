@@ -90,8 +90,11 @@ Nếu bạn nhấn Đăng nhập mà không có gì xảy ra hoặc báo lỗi:
 ### Lỗi trắng trang / 404
 - Đảm bảo file `vercel.json` đã có cấu hình `rewrites` (file này đã có sẵn trong repo, không nên xóa).
 
-### Lỗi "Quota exceeded" (Hết hạn mức)
-- Firebase gói miễn phí có giới hạn 50,000 lượt đọc/ngày. Nếu dùng quá nhiều, nó sẽ tạm dừng đến ngày hôm sau. Hãy kiểm tra tab **Usage** trong Firebase Console.
+### Lỗi "X" (Failed/Canceled) trên GitHub
+Nếu bạn thấy dấu "X" màu đỏ bên cạnh commit trên GitHub:
+- **Nguyên nhân**: Đây là Vercel báo cáo rằng bản build bị lỗi hoặc bị hủy (Canceled).
+- **Cách khắc phục**: Chỉ cần đẩy code mới lên (hoặc nhấn "Redeploy" trên Vercel), khi build thành công nó sẽ biến thành dấu tích xanh.
+- **Cách ẩn hoàn toàn**: Nếu bạn không muốn thấy nó, vào **Vercel Dashboard** -> **Settings** -> **Git** -> Tắt phần **GitHub Status Messages**.
 
 ---
 
