@@ -23,7 +23,7 @@ export const APP_CONFIG = {
   // 4. Chặn địa lý (Geo-blocking)
   // Danh sách các mã quốc gia muốn chặn (VD: 'VN', 'KR', 'JP'...)
   // Để trống [] nếu không muốn chặn quốc gia nào.
-  blockedCountries: ['VN', 'KR', 'JP'],
+  blockedCountries: ['VN'],
   
   // 5. Hình ảnh mặc định
   defaultLogo: "https://i.ibb.co/mL55f6z/logo.png",

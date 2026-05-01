@@ -89,6 +89,27 @@
         "donateQR": { "type": "string", "description": "Link ảnh QR Donate" },
         "updatedAt": { "type": "string", "format": "date-time", "description": "Ngày cập nhật" }
       }
+    },
+    "Admin": {
+      "title": "Admin",
+      "description": "Dùng để xác thực quyền quản trị qua UID",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid"]
+    },
+    "BlockedIp": {
+      "title": "BlockedIp",
+      "description": "Địa chỉ IP bị chặn truy cập",
+      "type": "object",
+      "properties": {
+        "ip": { "type": "string" },
+        "reason": { "type": "string" },
+        "blockedAt": { "type": "string", "format": "date-time" }
+      }
     }
   },
   "firestore": {
@@ -115,6 +136,14 @@
     "/settings/team": {
       "schema": "TeamInfo",
       "description": "Thông tin nhóm dịch"
+    },
+    "/admins/{uid}": {
+      "schema": "Admin",
+      "description": "Danh sách UID Admin"
+    },
+    "/blocked_ips/{ipId}": {
+      "schema": "BlockedIp",
+      "description": "Danh sách IP bị cấm"
     }
   }
 }
