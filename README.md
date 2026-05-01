@@ -20,26 +20,24 @@
 
 ## 🚀 Hướng dẫn triển khai (Dành cho Nhóm dịch)
 
-### Bước 1: Chuẩn bị tài khoản
-1.  Tạo tài khoản [GitHub](https://github.com/).
-2.  Tạo tài khoản [Vercel](https://vercel.com/).
-3.  Tạo tài khoản [Firebase](https://console.firebase.google.com/).
-4.  Tạo tài khoản [ImgBB](https://imgbb.com/) để lấy API Key (Dùng để lưu trữ ảnh truyện).
+Xem chi tiết hướng dẫn từ A-Z tại: **[DEPLOY_GUIDE.md](./DEPLOY_GUIDE.md)**
 
-### Bước 2: Thiết lập Firebase (Quan trọng)
-1.  Tạo một dự án mới trên Firebase.
-2.  Vào **Authentication** -> Bật **Google Sign-in**.
-3.  Vào **Firestore Database** -> Tạo database (chọn chế độ test hoặc production).
-4.  Vào **Project Settings** -> Cuộn xuống phần **Your apps** -> Chọn biểu tượng Web `</>` để lấy thông tin cấu hình.
-5.  Tạo file `src/firebase-applet-config.json` trong dự án của bạn và dán thông tin đó vào (Xem file mẫu `firebase-applet-config.json`).
+### Tóm tắt nhanh:
+1.  **Fork** dự án này về GitHub cá nhân.
+2.  Thiết lập **Firebase** (Auth & Firestore).
+3.  Lấy API Key từ **ImgBB**.
+4.  Triển khai lên **Vercel** và cấu hình **Environment Variables**.
 
-### Bước 3: Triển khai lên Vercel
-1.  Nhấn vào nút **Deploy with Vercel** ở đầu trang này.
-2.  Vercel sẽ yêu cầu bạn kết nối GitHub và tạo một kho lưu trữ mới.
-3.  Trong phần **Environment Variables**, hãy thêm:
-    -   **Key:** `VITE_IMGBB_API_KEY`
-    -   **Value:** (Mã API Key lấy từ ImgBB của bạn).
-4.  Nhấn **Deploy** và đợi 2 phút.
+---
+
+## 🛡️ Bảo mật & Tối ưu Chi phí
+
+Dự án này được thiết kế để chạy **hoàn toàn miễn phí** nếu bạn tuân thủ các nguyên tắc sau:
+- **Không hardcode thông tin nhạy cảm:** Luôn dùng Environment Variables cho email admin, API keys.
+- **Hạn mức Spark (Free):** Firebase gói Spark cung cấp đủ tài nguyên cho các nhóm dịch vừa và nhỏ.
+- **Lưu trữ ảnh bên ngoài:** Dùng ImgBB giúp tiết kiệm dung lượng lưu trữ của Firebase.
+
+> **Bài học kinh nghiệm:** Luôn đặt **Budget Alerts** trong Google Cloud Console để kiểm soát chi phí dù bạn đang dùng gói miễn phí. Tránh sử dụng Cloud Run hoặc các dịch vụ tốn phí nếu Vercel/Cloudflare đã đáp ứng được nhu cầu.
 
 ---
 
