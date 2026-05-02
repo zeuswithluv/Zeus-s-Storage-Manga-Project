@@ -728,44 +728,67 @@ export const SettingsPage = () => {
         <p className="text-gray-500">Tùy chỉnh trải nghiệm của bạn trên {APP_CONFIG.appName}.</p>
       </div>
 
-      <section className="space-y-10">
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-bold">Giao diện</h2>
+      <section className="space-y-12">
+        <div className="space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col">
+              <h2 className="text-xl font-black tracking-tight">Giao diện</h2>
+              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">Cá nhân hóa không gian đọc</span>
+            </div>
             <button 
               onClick={() => handleThemeChange(theme === 'system' ? 'neutral' : 'system')}
               className={cn(
-                "px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-2",
+                "px-5 py-2.5 rounded-[18px] text-xs font-black transition-all flex items-center gap-2 border shadow-sm",
                 theme === 'system' 
-                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                  : "bg-gray-800 text-gray-400 hover:text-white"
+                  ? "bg-primary text-white border-primary shadow-primary/20" 
+                  : "bg-[var(--card-app)] text-gray-400 border-[var(--border-app)] hover:text-white"
               )}
             >
-              <Monitor size={14} />
-              {theme === 'system' ? "Đang dùng Hệ thống" : "Dùng Hệ thống"}
+              <Monitor size={14} className={cn(theme === 'system' && "animate-pulse")} />
+              {theme === 'system' ? "Hệ thống: Bật" : "Dùng Hệ thống"}
             </button>
           </div>
 
           <div className={cn(
-            "p-8 bg-[var(--card-app)] rounded-3xl border border-[var(--border-app)] transition-all",
-            theme === 'system' && "opacity-50 pointer-events-none grayscale"
+            "p-10 bg-[var(--card-app)]/40 backdrop-blur-md rounded-[40px] border border-[var(--border-app)] transition-all relative overflow-hidden group",
+            theme === 'system' && "opacity-40 pointer-events-none grayscale"
           )}>
-            <div className="flex justify-between mb-6 px-2">
-              <div className="flex flex-col items-center gap-2">
-                <Sun size={20} className={cn(theme === 'light' ? "text-primary" : "text-gray-600")} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Sáng</span>
+            {/* Zen Background Decoration */}
+            <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+            
+            <div className="flex justify-between items-center mb-10 px-4 relative z-10">
+              <div className="flex flex-col items-center gap-3">
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
+                  theme === 'light' ? "bg-primary text-white shadow-xl shadow-primary/20 scale-110" : "bg-gray-800/50 text-gray-600"
+                )}>
+                  <Sun size={24} />
+                </div>
+                <span className={cn("text-[10px] font-black uppercase tracking-widest", theme === 'light' ? "text-primary" : "text-gray-500")}>Bright</span>
               </div>
-              <div className="flex flex-col items-center gap-2">
-                <div className={cn("w-5 h-5 rounded-full border-2", theme === 'neutral' ? "border-primary bg-primary/20" : "border-gray-600")} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Trung tính</span>
+              
+              <div className="flex flex-col items-center gap-3">
+                <div className={cn(
+                  "w-12 h-12 rounded-full border-2 transition-all duration-500 flex items-center justify-center",
+                  theme === 'neutral' ? "border-primary bg-primary shadow-xl shadow-primary/20 scale-110" : "border-gray-800 bg-gray-800/50"
+                )}>
+                  <div className="w-4 h-4 rounded-full bg-white/20" />
+                </div>
+                <span className={cn("text-[10px] font-black uppercase tracking-widest", theme === 'neutral' ? "text-primary" : "text-gray-500")}>Zen</span>
               </div>
-              <div className="flex flex-col items-center gap-2">
-                <Moon size={20} className={cn(theme === 'dark' ? "text-primary" : "text-gray-600")} />
-                <span className="text-[10px] font-bold uppercase tracking-wider">Tối</span>
+
+              <div className="flex flex-col items-center gap-3">
+                <div className={cn(
+                  "w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500",
+                  theme === 'dark' ? "bg-primary text-white shadow-xl shadow-primary/20 scale-110" : "bg-gray-800/50 text-gray-600"
+                )}>
+                  <Moon size={24} />
+                </div>
+                <span className={cn("text-[10px] font-black uppercase tracking-widest", theme === 'dark' ? "text-primary" : "text-gray-500")}>Dark</span>
               </div>
             </div>
 
-            <div className="relative h-2 bg-gray-800 rounded-full mb-2">
+            <div className="relative h-2 bg-gray-800/50 rounded-full mb-4 px-1 group-hover:bg-gray-800 transition-colors">
               <input 
                 type="range" 
                 min="0" 
@@ -773,23 +796,25 @@ export const SettingsPage = () => {
                 step="1"
                 value={getSliderValue()}
                 onChange={handleSliderChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50"
               />
               <motion.div 
-                className="absolute top-0 left-0 h-full bg-primary rounded-full"
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-primary/50 to-primary rounded-full shadow-[0_0_15px_rgba(var(--primary-rgb),0.3)]"
                 animate={{ width: `${(getSliderValue() / 2) * 100}%` }}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
               />
               <motion.div 
-                className="absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-xl border-4 border-primary z-0"
-                animate={{ left: `calc(${(getSliderValue() / 2) * 100}% - 12px)` }}
-                transition={{ type: "spring", stiffness: 300, damping: 30 }}
-              />
+                className="absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.5)] border-4 border-primary z-10 flex items-center justify-center"
+                animate={{ left: `calc(${(getSliderValue() / 2) * 100}% - 16px)` }}
+                transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              >
+                <div className="w-1 h-3 bg-primary/20 rounded-full" />
+              </motion.div>
             </div>
           </div>
           {theme === 'system' && (
-            <p className="text-[10px] text-gray-500 mt-3 text-center italic">
-              Tắt chế độ Hệ thống để tùy chỉnh thanh kéo giao diện.
+            <p className="text-[11px] text-gray-500 mt-4 text-center font-medium italic opacity-70">
+              Chế độ Hệ thống đang được bật. Vui lòng tắt để tùy chỉnh thủ công.
             </p>
           )}
         </div>

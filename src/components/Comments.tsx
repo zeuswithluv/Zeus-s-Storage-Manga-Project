@@ -26,42 +26,48 @@ const CommentItem = React.memo(({ c, isAdmin, user, formatDate, handleReply, han
   handleReply: (n: string) => void,
   handleDelete: (id: string) => void
 }) => (
-  <div className="flex gap-4 group">
-    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-800 shrink-0">
+  <motion.div 
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="flex gap-4 group hover:bg-white/[0.02] p-2 -mx-2 rounded-2xl transition-all"
+  >
+    <div className="w-11 h-11 rounded-2xl overflow-hidden border border-white/5 ring-1 ring-white/5 shrink-0 bg-gray-800 flex items-center justify-center shadow-lg">
       {c.userPhoto ? (
         <img src={c.userPhoto} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />
       ) : (
-        <div className="w-full h-full bg-gray-800 flex items-center justify-center">
-          <UserIcon size={20} className="text-gray-500" />
-        </div>
+        <UserIcon size={22} className="text-gray-500" />
       )}
     </div>
-    <div className="flex-1 space-y-1">
-      <div className="flex items-center gap-3">
-        <span className="font-bold text-sm">{c.userName}</span>
-        <span className="text-xs text-gray-500">{formatDate(c.createdAt)}</span>
-        <div className="flex gap-2 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+    <div className="flex-1 space-y-1.5 min-w-0">
+      <div className="flex items-center gap-2">
+        <span className="font-black text-sm text-[var(--text-app)] truncate">{c.userName}</span>
+        <div className="w-1 h-1 rounded-full bg-gray-700" />
+        <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider">{formatDate(c.createdAt)}</span>
+        
+        <div className="flex gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-all">
           <button 
             onClick={() => handleReply(c.userName)}
-            className="p-2 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-all"
+            className="p-1.5 text-gray-500 hover:text-primary hover:bg-primary/10 rounded-xl transition-all"
             title="Trả lời"
           >
-            <Reply size={16} />
+            <Reply size={14} />
           </button>
           {(isAdmin || (user && user.uid === c.uid)) && (
             <button 
               onClick={() => handleDelete(c.id)}
-              className="p-2 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+              className="p-1.5 text-gray-500 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
               title="Xóa"
             >
-              <Trash2 size={16} />
+              <Trash2 size={14} />
             </button>
           )}
         </div>
       </div>
-      <p className="text-gray-400 text-sm">{c.content}</p>
+      <div className="bg-[var(--card-app)]/50 backdrop-blur-sm border border-white/[0.05] p-3 rounded-2xl rounded-tl-none">
+        <p className="text-gray-300 text-[13px] leading-relaxed break-words">{c.content}</p>
+      </div>
     </div>
-  </div>
+  </motion.div>
 ));
 
 export const CommentSection = ({ mangaId, isReader = false }: { mangaId: string, isReader?: boolean }) => {
@@ -204,115 +210,142 @@ export const CommentSection = ({ mangaId, isReader = false }: { mangaId: string,
 
   const handleReply = (userName: string) => {
     setNewComment(`@${userName} `);
-    // If in reader mode, the input is already visible in the form
-    // We might need to focus it, but for now just setting the text is good
   };
 
   const formatDate = (date: any) => {
     if (!date) return 'Vừa xong';
-    if (date instanceof Timestamp) return date.toDate().toLocaleDateString();
-    if (typeof date === 'string') return new Date(date).toLocaleDateString();
+    if (date instanceof Timestamp) {
+      const now = new Date();
+      const diff = now.getTime() - date.toDate().getTime();
+      const minutes = Math.floor(diff / 60000);
+      if (minutes < 1) return 'Vừa xong';
+      if (minutes < 60) return `${minutes} phút trước`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours} giờ trước`;
+      return date.toDate().toLocaleDateString('vi-VN');
+    }
     return 'N/A';
   };
 
   if (isReader) {
     return (
-      <div className="fixed bottom-6 left-6 z-40">
-        <button 
+      <div className="fixed bottom-6 left-6 z-[70]">
+        <motion.button 
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setIsOpen(!isOpen)}
-          className="w-12 h-12 bg-primary text-white rounded-full shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+          className={cn(
+            "w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300",
+            isOpen ? "bg-primary text-white rotate-90 rounded-full" : "bg-[var(--sidebar-app)] text-primary border border-white/10"
+          )}
         >
-          <MessageSquare size={24} />
-        </button>
+          {isOpen ? <Reply size={24} className="rotate-180" /> : <MessageSquare size={24} />}
+        </motion.button>
 
         <AnimatePresence>
           {isOpen && (
             <motion.div 
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="absolute bottom-16 left-0 w-80 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[400px]"
+              initial={{ opacity: 0, scale: 0.9, y: 20, filter: 'blur(10px)' }}
+              animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, scale: 0.9, y: 20, filter: 'blur(10px)' }}
+              className="absolute bottom-20 left-0 w-[350px] bg-[var(--sidebar-app)]/90 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-[0_24px_80px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col max-h-[500px]"
             >
-              <div className="p-4 border-b border-gray-800 bg-gray-800/50 flex justify-between items-center">
-                <h3 className="font-bold text-sm">Bình luận</h3>
-                <span className="text-xs text-gray-500">{totalCount}</span>
+              <div className="p-6 border-b border-white/5 bg-white/5 flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-xl">
+                    <MessageSquare size={18} className="text-primary" />
+                  </div>
+                  <h3 className="font-black text-sm tracking-tight">Bình luận</h3>
+                </div>
+                <span className="px-2.5 py-1 bg-white/5 rounded-full text-[10px] font-black text-gray-400">{totalCount}</span>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              <div className="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar">
                 {loading ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="animate-spin text-primary" size={20} />
+                  <div className="flex justify-center py-10">
+                    <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
                   </div>
                 ) : comments.length > 0 ? (
                   comments.map(c => (
-                    <div key={c.id} className="space-y-1">
+                    <div key={c.id} className="space-y-2 group">
                       <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded-full overflow-hidden border border-primary/30">
+                        <div className="w-8 h-8 rounded-xl overflow-hidden border border-white/10 ring-1 ring-white/10 bg-gray-800 shrink-0">
                           {c.userPhoto ? (
                             <img src={c.userPhoto} alt="" className="w-full h-full object-cover" />
                           ) : (
-                            <div className="w-full h-full bg-primary/20 flex items-center justify-center">
-                              <UserIcon size={10} className="text-primary" />
+                            <div className="w-full h-full flex items-center justify-center">
+                              <UserIcon size={14} className="text-gray-500" />
                             </div>
                           )}
                         </div>
-                        <span className="text-[10px] font-bold text-gray-400">{c.userName}</span>
-                        <span className="text-[10px] text-gray-600">{formatDate(c.createdAt)}</span>
-                        <div className="flex gap-1 ml-auto">
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-[11px] font-black text-gray-300 truncate">{c.userName}</span>
+                          <span className="text-[9px] text-gray-600 font-bold uppercase">{formatDate(c.createdAt)}</span>
+                        </div>
+                        <div className="flex gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
                           <button 
                             onClick={() => handleReply(c.userName)}
-                            className="p-1 text-gray-600 hover:text-primary transition-colors"
-                            title="Trả lời"
+                            className="p-1.5 text-gray-600 hover:text-primary transition-colors"
                           >
-                            <Reply size={10} />
+                            <Reply size={12} />
                           </button>
                           {(isAdmin || (user && user.uid === c.uid)) && (
                             <button 
                               onClick={() => setCommentToDelete(c.id)}
-                              className="p-1 text-gray-600 hover:text-red-500 transition-colors"
-                              title="Xóa"
+                              className="p-1.5 text-gray-600 hover:text-red-500 transition-colors"
                             >
-                              <Trash2 size={10} />
+                              <Trash2 size={12} />
                             </button>
                           )}
                         </div>
                       </div>
-                      <p className="text-xs text-gray-300 bg-gray-800 p-2 rounded-lg">{c.content}</p>
+                      <div className="bg-white/5 border border-white/[0.03] p-3 rounded-2xl rounded-tl-none">
+                        <p className="text-[12px] text-gray-300 leading-relaxed font-medium">{c.content}</p>
+                      </div>
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-xs text-gray-500 py-4">Chưa có bình luận nào.</p>
+                  <div className="text-center py-12 opacity-30">
+                    <MessageSquare size={40} className="mx-auto mb-4" />
+                    <p className="text-[11px] font-bold uppercase tracking-widest italic">Chưa có bình luận</p>
+                  </div>
                 )}
 
                 {totalCount > comments.length && !loading && (
                   <button 
                     onClick={handleLoadMore}
                     disabled={loadingMore}
-                    className="w-full py-2 text-[10px] font-bold text-primary hover:bg-primary/5 rounded-lg transition-all disabled:opacity-50"
+                    className="w-full py-3 mt-4 text-[11px] font-black uppercase tracking-widest text-primary bg-primary/5 hover:bg-primary/10 border border-primary/10 rounded-2xl transition-all disabled:opacity-50"
                   >
-                    {loadingMore ? <Loader2 className="animate-spin mx-auto" size={12} /> : `Xem thêm bình luận (${totalCount - comments.length})`}
+                    {loadingMore ? "Đang tải..." : `Xem thêm (${totalCount - comments.length})`}
                   </button>
                 )}
               </div>
 
-              {user ? (
-                <form onSubmit={handleSubmit} className="p-3 bg-gray-800/50 border-t border-gray-800 flex gap-2">
-                  <input 
-                    type="text" 
-                    value={newComment}
-                    onChange={e => setNewComment(e.target.value)}
-                    placeholder="Viết bình luận..."
-                    className="flex-1 bg-gray-900 border border-gray-700 rounded-lg px-3 py-1.5 text-xs outline-none focus:border-primary"
-                  />
-                  <button type="submit" className="p-1.5 bg-primary text-white rounded-lg">
-                    <Send size={14} />
-                  </button>
-                </form>
-              ) : (
-                <div className="p-3 bg-gray-800/50 border-t border-gray-800 text-center">
-                  <p className="text-[10px] text-gray-500">Đăng nhập để bình luận</p>
-                </div>
-              )}
+              <div className="p-4 bg-black/40 border-t border-white/5 shrink-0">
+                {user ? (
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+                    <input 
+                      type="text" 
+                      value={newComment}
+                      onChange={e => setNewComment(e.target.value)}
+                      placeholder="Lời nhắn từ tâm..."
+                      className="flex-1 bg-white/5 border border-white/10 rounded-[18px] px-4 py-2.5 text-[13px] outline-none focus:border-primary/50 transition-all font-medium"
+                    />
+                    <motion.button 
+                      whileTap={{ scale: 0.9 }}
+                      type="submit" 
+                      className="w-10 h-10 bg-primary text-white rounded-[18px] shadow-lg shadow-primary/20 flex items-center justify-center shrink-0"
+                    >
+                      <Send size={18} />
+                    </motion.button>
+                  </form>
+                ) : (
+                  <div className="py-2 text-center">
+                    <p className="text-[11px] text-gray-500 font-bold uppercase tracking-wide">Vui lòng đăng nhập để bình luận</p>
+                  </div>
+                )}
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -321,66 +354,86 @@ export const CommentSection = ({ mangaId, isReader = false }: { mangaId: string,
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-bold flex items-center gap-2">
-        <MessageSquare size={20} className="text-primary" />
-        Bình luận ({totalCount})
-      </h2>
+    <div className="space-y-10">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-black tracking-tight flex items-center gap-4">
+          <div className="p-3 bg-primary/10 rounded-2xl">
+            <MessageSquare size={24} className="text-primary" />
+          </div>
+          Bình luận ({totalCount})
+        </h2>
+      </div>
       
       {user ? (
-        <form onSubmit={handleSubmit} className="flex gap-4">
-          <div className="flex-1">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-transparent rounded-3xl blur-xl opacity-0 group-focus-within:opacity-100 transition-all duration-500" />
             <textarea 
               value={newComment}
               onChange={e => setNewComment(e.target.value)}
-              placeholder="Viết bình luận của bạn..."
-              className="w-full bg-gray-800/50 border border-gray-700 rounded-xl px-4 py-3 text-sm outline-none focus:border-primary resize-none"
-              rows={3}
+              placeholder="Chia sẻ cảm nhận của bạn về bộ truyện này..."
+              className="relative w-full bg-[var(--card-app)]/50 backdrop-blur-sm border border-[var(--border-app)] rounded-3xl px-6 py-5 text-sm outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/5 transition-all resize-none shadow-sm min-h-[120px] font-medium"
             />
           </div>
-          <button type="submit" className="h-fit px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary-dark transition-colors">
-            Gửi
-          </button>
+          <div className="flex justify-end">
+            <motion.button 
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit" 
+              className="px-10 py-4 bg-primary text-white rounded-2xl font-black text-sm hover:bg-primary-dark transition-all shadow-xl shadow-primary/20 flex items-center gap-3"
+            >
+              <Send size={18} />
+              Gửi bình luận
+            </motion.button>
+          </div>
         </form>
       ) : (
-        <div className="p-6 bg-gray-800/30 border border-dashed border-gray-700 rounded-xl text-center">
-          <p className="text-gray-500">Vui lòng đăng nhập để gửi bình luận.</p>
+        <div className="p-10 bg-[var(--card-app)]/30 border-2 border-dashed border-[var(--border-app)] rounded-[40px] text-center flex flex-col items-center gap-4">
+          <div className="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center text-gray-600">
+            <UserIcon size={32} />
+          </div>
+          <p className="text-gray-500 font-bold tracking-tight">Cần đăng nhập để tham gia thảo luận.</p>
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="space-y-8">
         {loading ? (
-          <div className="flex justify-center py-10">
-            <Loader2 className="animate-spin text-primary" size={32} />
+          <div className="flex justify-center py-20">
+            <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
           </div>
         ) : comments.length > 0 ? (
-          comments.map(c => (
-            <CommentItem 
-              key={c.id}
-              c={c}
-              isAdmin={isAdmin}
-              user={user}
-              formatDate={formatDate}
-              handleReply={handleReply}
-              handleDelete={(id) => setCommentToDelete(id)}
-            />
-          ))
+          <div className="grid grid-cols-1 gap-6">
+            {comments.map(c => (
+              <CommentItem 
+                key={c.id}
+                c={c}
+                isAdmin={isAdmin}
+                user={user}
+                formatDate={formatDate}
+                handleReply={handleReply}
+                handleDelete={(id) => setCommentToDelete(id)}
+              />
+            ))}
+          </div>
         ) : (
-          <div className="text-center py-10 opacity-50">
-            <p>Chưa có bình luận nào. Hãy là người đầu tiên!</p>
+          <div className="text-center py-20 bg-[var(--card-app)]/20 rounded-[40px] border border-dashed border-[var(--border-app)]">
+            <MessageSquare size={48} className="mx-auto mb-4 text-gray-800 opacity-20" />
+            <p className="text-gray-500 font-bold uppercase tracking-[0.2em] italic text-sm">Vườn không nhà trống</p>
           </div>
         )}
 
         {totalCount > comments.length && !loading && (
-          <div className="flex justify-center pt-4">
-            <button 
+          <div className="flex justify-center pt-8">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={handleLoadMore}
               disabled={loadingMore}
-              className="px-8 py-3 bg-[var(--card-app)] border border-[var(--border-app)] rounded-xl text-sm font-bold text-primary hover:border-primary transition-all disabled:opacity-50 flex items-center gap-2"
+              className="px-12 py-4 bg-[var(--card-app)] border border-[var(--border-app)] rounded-2xl text-sm font-black text-primary hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50 flex items-center gap-3 shadow-sm hover:shadow-primary/10"
             >
-              {loadingMore && <Loader2 className="animate-spin" size={16} />}
-              Xem thêm bình luận ({totalCount - comments.length})
-            </button>
+              {loadingMore ? <Loader2 className="animate-spin" size={20} /> : <RefreshCw size={18} />}
+              Xem thêm {totalCount - comments.length} bình luận khác
+            </motion.button>
           </div>
         )}
       </div>
@@ -389,12 +442,12 @@ export const CommentSection = ({ mangaId, isReader = false }: { mangaId: string,
       <AnimatePresence>
         {successMessage && (
           <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] bg-primary text-white px-6 py-3 rounded-2xl font-bold shadow-2xl flex items-center gap-2"
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 50, scale: 0.9 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] bg-primary text-white px-8 py-4 rounded-2xl font-black shadow-2xl flex items-center gap-3"
           >
-            <ShieldCheck size={20} />
+            <CheckCircle2 size={24} />
             {successMessage}
           </motion.div>
         )}
@@ -403,33 +456,33 @@ export const CommentSection = ({ mangaId, isReader = false }: { mangaId: string,
       {/* Delete Confirmation Modal */}
       <AnimatePresence>
         {commentToDelete && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md">
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-gray-900 border border-red-500/20 rounded-3xl p-8 w-full max-w-md shadow-2xl text-center"
+              initial={{ scale: 0.9, opacity: 0, filter: 'blur(10px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+              exit={{ scale: 0.9, opacity: 0, filter: 'blur(10px)' }}
+              className="bg-[var(--sidebar-app)] border border-red-500/20 rounded-[40px] p-10 w-full max-w-md shadow-2xl text-center"
             >
-              <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Trash2 size={40} className="text-red-500" />
+              <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-8 ring-8 ring-red-500/5">
+                <Trash2 size={48} className="text-red-500" />
               </div>
-              <h3 className="text-2xl font-black mb-4">Xác nhận xóa bình luận?</h3>
-              <p className="text-gray-400 mb-8 leading-relaxed">
-                Bình luận này sẽ bị xóa vĩnh viễn và không thể hoàn tác.
+              <h3 className="text-3xl font-black mb-4 tracking-tight">Xóa bình luận?</h3>
+              <p className="text-gray-500 mb-10 leading-relaxed font-medium uppercase text-[11px] tracking-widest">
+                Hành động này không thể hoàn tác và dữ liệu sẽ biến mất vĩnh viễn.
               </p>
               
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <button 
                   onClick={() => setCommentToDelete(null)}
-                  className="flex-1 py-4 bg-gray-800 rounded-2xl font-bold hover:bg-gray-700 transition-all"
+                  className="flex-1 py-5 bg-white/5 rounded-[24px] font-black text-sm hover:bg-white/10 transition-all border border-white/5"
                 >
                   Quay lại
                 </button>
                 <button 
                   onClick={handleDelete}
-                  className="flex-1 py-4 bg-red-500 rounded-2xl font-bold hover:bg-red-600 transition-all text-white shadow-xl shadow-red-500/20"
+                  className="flex-1 py-5 bg-red-500 rounded-[24px] font-black text-sm hover:bg-red-600 transition-all text-white shadow-xl shadow-red-500/30"
                 >
-                  Xóa vĩnh viễn
+                  Xóa ngay
                 </button>
               </div>
             </motion.div>

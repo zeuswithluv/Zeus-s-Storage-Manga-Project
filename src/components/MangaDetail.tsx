@@ -248,17 +248,27 @@ export const MangaDetailPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin text-primary" size={48} />
+      <div className="min-h-screen bg-[var(--bg-app)] flex items-center justify-center">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin shadow-[0_0_30px_rgba(var(--primary-rgb),0.3)]" 
+        />
       </div>
     );
   }
 
   if (!manga) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-8 text-center">
-        <h2 className="text-2xl font-bold mb-4">Không tìm thấy truyện</h2>
-        <Link to="/" className="text-primary font-bold hover:underline">Quay lại trang chủ</Link>
+      <div className="min-h-screen bg-[var(--bg-app)] flex flex-col items-center justify-center p-8 text-center">
+        <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mb-8">
+          <Globe size={48} className="text-red-500 opacity-50" />
+        </div>
+        <h2 className="text-3xl font-black mb-4 tracking-tight">Không tìm thấy truyện</h2>
+        <p className="text-gray-500 mb-8 max-w-md">Dữ liệu có thể đã bị xóa hoặc đường dẫn không chính xác.</p>
+        <Link to="/" className="px-8 py-3 bg-primary text-white rounded-2xl font-black text-sm uppercase tracking-widest shadow-xl shadow-primary/20 hover:scale-105 transition-all">
+          Quay lại trang chủ
+        </Link>
       </div>
     );
   }
@@ -428,24 +438,24 @@ export const MangaDetailPage = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto p-6 sm:p-10 pt-12 sm:pt-16 grid grid-cols-1 lg:grid-cols-3 gap-8 sm:gap-12">
-        <div className="lg:col-span-2 space-y-8 sm:space-y-12">
+      <div className="max-w-7xl mx-auto p-6 sm:p-10 pt-12 sm:pt-20 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+        <div className="lg:col-span-8 space-y-12 sm:space-y-20">
           {/* Mobile/Tablet Stats and Links */}
-          <div className="lg:hidden space-y-8">
+          <div className="lg:hidden space-y-10">
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-4 p-4 bg-[var(--card-app)]/30 border border-[var(--border-app)] rounded-2xl">
-              <div className="text-center">
-                <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Lượt xem</div>
-                <div className="text-sm font-black">{manga.viewCount?.toLocaleString() || 0}</div>
+            <div className="grid grid-cols-3 gap-4 p-6 bg-white/[0.03] backdrop-blur-md border border-white/5 rounded-[32px] shadow-xl">
+              <div className="text-center group">
+                <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1 group-hover:text-primary transition-colors">Lượt xem</div>
+                <div className="text-base font-black tracking-tighter">{manga.viewCount?.toLocaleString() || 0}</div>
               </div>
-              <div className="text-center border-x border-[var(--border-app)]">
-                <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Theo dõi</div>
-                <div className="text-sm font-black">{manga.followerCount?.toLocaleString() || 0}</div>
+              <div className="text-center border-x border-white/5 group">
+                <div className="text-[10px] text-gray-500 uppercase font-black tracking-widest mb-1 group-hover:text-primary transition-colors">Theo dõi</div>
+                <div className="text-base font-black tracking-tighter">{manga.followerCount?.toLocaleString() || 0}</div>
               </div>
-              <div className="text-center">
-                <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">Đánh giá</div>
-                <div className="text-sm font-black text-primary">
-                  {manga.rating || 0} ★ <span className="text-[10px] text-gray-400 font-normal">({manga.ratingCount || 0})</span>
+              <div className="text-center group">
+                <div className="text-[10px] text-gray-400 uppercase font-black tracking-widest mb-1 group-hover:text-primary transition-colors">Đánh giá</div>
+                <div className="text-base font-black text-primary tracking-tighter">
+                  {manga.rating || 0} ★ <span className="text-[10px] text-gray-500 font-bold">({manga.ratingCount || 0})</span>
                 </div>
               </div>
             </div>

@@ -119,13 +119,15 @@ const AccessGuard = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const checkAccess = async () => {
       try {
-        // 1. Get Client IP via serverless proxy
+        // 1. Get Client IP & Country via serverless proxy
         let clientIp = '';
+        let clientCountry = '';
         try {
           const ipRes = await fetch('/api/ip');
           if (ipRes.ok) {
-            const data = await ipRes.json() as { ip: string };
+            const data = await ipRes.json() as { ip: string, country?: string };
             clientIp = data.ip;
+            clientCountry = data.country || '';
           }
         } catch (e) {
           console.warn('Backend IP API not available, using fallback.');
@@ -144,15 +146,22 @@ const AccessGuard = ({ children }: { children: React.ReactNode }) => {
           }
         }
 
-        // 3. Geo Blocking (Always run as secondary check)
-        const response = await fetch('https://ipapi.co/json/');
-        const data = await response.json() as any;
+        // 3. Geo Blocking (Prioritize internal API country, fallback to external if needed)
+        let processedCountryCode = clientCountry;
         
-        // If we didn't get IP from our API, use the one from geo API
-        if (!clientIp) clientIp = data.ip;
+        if (!processedCountryCode || processedCountryCode === 'Unknown') {
+          try {
+            const response = await fetch('https://ipapi.co/json/');
+            const data = await response.json() as any;
+            processedCountryCode = data.country_code;
+            if (!clientIp) clientIp = data.ip;
+          } catch (e) {
+            console.error('Geo API fallback failed:', e);
+          }
+        }
 
         const blockedCountries = APP_CONFIG.blockedCountries;
-        if (blockedCountries.length > 0 && blockedCountries.includes(data.country_code)) {
+        if (blockedCountries.length > 0 && processedCountryCode && blockedCountries.includes(processedCountryCode)) {
           setBlockReason('geo');
           setIsBlocked(true);
         } else {
@@ -685,141 +694,160 @@ export default function App() {
             </header>
 
             <main className="flex-1">
-              <Routes>
-                <Route path="/" element={<HomePage />} />
-                <Route path="/manga/:mangaId" element={<MangaDetailPage />} />
-                <Route path="/read/:mangaId/:chapterId" element={<ReaderPage />} />
-                <Route path="/library" element={<LibraryPage />} />
-                <Route path="/upload" element={<UploadPage />} />
-                <Route path="/add-chapter" element={<AddChapterPage />} />
-                <Route path="/search" element={<SearchPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/edit-manga/:mangaId" element={<EditMangaPage />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={location.pathname}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2, ease: "easeInOut" }}
+                  className="min-h-full"
+                >
+                  <Routes location={location}>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/manga/:mangaId" element={<MangaDetailPage />} />
+                    <Route path="/read/:mangaId/:chapterId" element={<ReaderPage />} />
+                    <Route path="/library" element={<LibraryPage />} />
+                    <Route path="/upload" element={<UploadPage />} />
+                    <Route path="/add-chapter" element={<AddChapterPage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                    <Route path="/settings" element={<SettingsPage />} />
+                    <Route path="/edit-manga/:mangaId" element={<EditMangaPage />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </motion.div>
+              </AnimatePresence>
             </main>
           </div>
         </div>
 
         {/* Global Team Info Widget */}
         <div className={cn(
-          "fixed bottom-6 z-[40] transition-all duration-500",
+          "fixed bottom-6 z-[60] transition-all duration-500",
           "right-6 lg:right-auto lg:left-6" // Move to left on laptop since sidebar is on right
         )}>
           <AnimatePresence>
             {showTeamInfo && (
               <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 20, scale: 0.9 }}
+                initial={{ opacity: 0, y: 20, scale: 0.9, filter: 'blur(10px)' }}
+                animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
+                exit={{ opacity: 0, y: 20, scale: 0.9, filter: 'blur(10px)' }}
                 className={cn(
-                  "absolute bottom-16 w-72 bg-[var(--sidebar-app)] border border-[var(--border-app)] rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] overflow-hidden max-h-[70vh] flex flex-col",
+                  "absolute bottom-20 w-[300px] bg-[var(--sidebar-app)]/90 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-[0_24px_80px_rgba(0,0,0,0.6)] overflow-hidden max-h-[80vh] flex flex-col",
                   "right-0 lg:right-auto lg:left-0"
                 )}
               >
-                {/* Header with Gradient */}
-                <div className="bg-gradient-to-r from-primary/20 to-transparent p-5 border-b border-[var(--border-app)] shrink-0">
-                  <h3 className="font-black text-sm flex items-center gap-3">
-                    <div className="p-2 bg-primary/20 rounded-lg">
-                      <Users size={18} className="text-primary" />
+                {/* Header with Zen Gradient */}
+                <div className="relative p-6 shrink-0 overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-primary/5 to-transparent z-0" />
+                  <div className="relative z-10 flex items-center gap-4">
+                    <div className="p-3 bg-primary/20 rounded-2xl ring-1 ring-primary/20 shadow-inner">
+                      <Users size={22} className="text-primary" />
                     </div>
                     <div className="flex flex-col">
-                      <span>Thông tin nhóm dịch</span>
-                      <span className="text-[10px] text-gray-400 font-medium uppercase tracking-wider">Kết nối với chúng tôi</span>
+                      <span className="font-black text-lg tracking-tight">Thông tin nhóm</span>
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] opacity-80">Connected with Zeus</span>
                     </div>
-                  </h3>
+                  </div>
                 </div>
 
-                <div className="p-3 space-y-1.5 overflow-y-auto custom-scrollbar">
+                <div className="p-4 space-y-2 overflow-y-auto custom-scrollbar">
                   {teamInfo?.facebook && (
-                    <a href={teamInfo.facebook} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl transition-all group">
+                    <a href={teamInfo.facebook} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.05] rounded-[20px] transition-all group">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-lg shadow-blue-500/10">
+                        <div className="w-10 h-10 bg-blue-500/10 rounded-xl flex items-center justify-center text-blue-500 group-hover:bg-blue-500 group-hover:text-white transition-all shadow-lg shadow-blue-500/10 ring-1 ring-blue-500/20">
                           <Facebook size={20} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-black">Facebook</span>
-                          <span className="text-[9px] text-gray-500">Theo dõi tin tức mới nhất</span>
+                          <span className="text-sm font-bold">Facebook</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Theo dõi tin tức mới</span>
                         </div>
                       </div>
                       <ChevronRight size={14} className="text-gray-600 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </a>
                   )}
                   {teamInfo?.discord && (
-                    <a href={teamInfo.discord} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl transition-all group">
+                    <a href={teamInfo.discord} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.05] rounded-[20px] transition-all group">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-lg shadow-indigo-500/10">
+                        <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white transition-all shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/20">
                           <MessageCircle size={20} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-black">Discord</span>
-                          <span className="text-[9px] text-gray-500">Tham gia cộng đồng Zeus</span>
+                          <span className="text-sm font-bold">Discord</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Tham gia cộng đồng</span>
                         </div>
                       </div>
                       <ChevronRight size={14} className="text-gray-600 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </a>
                   )}
                   {teamInfo?.telegram && (
-                    <a href={teamInfo.telegram} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 hover:bg-white/5 rounded-2xl transition-all group">
+                    <a href={teamInfo.telegram} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.05] rounded-[20px] transition-all group">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center text-sky-500 group-hover:bg-sky-500 group-hover:text-white transition-all shadow-lg shadow-sky-500/10">
+                        <div className="w-10 h-10 bg-sky-500/10 rounded-xl flex items-center justify-center text-sky-500 group-hover:bg-sky-500 group-hover:text-white transition-all shadow-lg shadow-sky-500/10 ring-1 ring-sky-500/20">
                           <Send size={20} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-black">Telegram</span>
-                          <span className="text-[9px] text-gray-500">Nhận thông báo tức thì</span>
+                          <span className="text-sm font-bold">Telegram</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Nhận thông báo nhanh</span>
                         </div>
                       </div>
                       <ChevronRight size={14} className="text-gray-600 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </a>
                   )}
                   {teamInfo?.website && (
-                    <a href={teamInfo.website} target="_blank" rel="noreferrer" className="flex items-center justify-between p-3 hover:bg-primary/5 rounded-2xl transition-all group border border-transparent hover:border-primary/20">
+                    <a href={teamInfo.website} target="_blank" rel="noreferrer" className="flex items-center justify-between p-4 bg-white/[0.03] hover:bg-white/[0.08] border border-white/[0.05] rounded-[20px] transition-all group">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg shadow-primary/10">
+                        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-white transition-all shadow-lg shadow-primary/10 ring-1 ring-primary/20">
                           <Globe size={20} />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-xs font-black text-primary">Website Chính Thức</span>
-                          <span className="text-[9px] text-primary/60">Ghé thăm trang chủ của nhóm</span>
+                          <span className="text-sm font-bold">Website</span>
+                          <span className="text-[10px] text-gray-500 font-medium">Ghé thăm trang chủ</span>
                         </div>
                       </div>
-                      <ChevronRight size={14} className="text-primary/40 group-hover:text-primary transition-all" />
+                      <ChevronRight size={14} className="text-gray-600 group-hover:text-primary group-hover:translate-x-1 transition-all" />
                     </a>
                   )}
 
                   {teamInfo?.donateQR && (
-                    <div className="mt-4 p-4 bg-primary/5 rounded-2xl border border-primary/10">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-primary mb-3 text-center">Ủng hộ nhóm dịch (Donate)</h4>
-                      <div className="aspect-square w-full bg-white rounded-xl p-2 shadow-inner">
+                    <div className="mt-4 p-5 bg-primary/5 rounded-[24px] border border-primary/10 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 p-2 opacity-10">
+                        <Zap size={48} className="text-primary" />
+                      </div>
+                      <h4 className="text-[11px] font-black uppercase tracking-[0.15em] text-primary mb-4 text-center">Ủng hộ nhóm dịch (Donate)</h4>
+                      <div className="aspect-square w-full bg-white rounded-2xl p-2.5 shadow-[0_10px_30px_rgba(0,0,0,0.1)] ring-1 ring-black/5">
                         <img src={teamInfo.donateQR} alt="Donate QR" className="w-full h-full object-contain" />
                       </div>
-                      <p className="text-[9px] text-gray-500 mt-3 text-center leading-tight">
-                        Quét mã QR để ủng hộ nhóm dịch có thêm động lực ra chương mới nhé! ❤️
+                      <p className="text-[10px] text-gray-500 mt-4 text-center leading-relaxed font-medium">
+                        Sự ủng hộ của bạn là động lực to lớn nhất để nhóm tiếp tục phát triển! ❤️
                       </p>
                     </div>
                   )}
 
                   {!(teamInfo && (teamInfo.facebook || teamInfo.discord || teamInfo.telegram || teamInfo.website || teamInfo.donateQR)) && (
-                    <div className="text-center py-8">
-                      <Users size={32} className="mx-auto text-gray-800 mb-2 opacity-20" />
-                      <p className="text-[10px] text-gray-600 italic">Chưa có thông tin liên hệ.</p>
+                    <div className="text-center py-12">
+                      <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5">
+                        <Users size={32} className="text-gray-700 opacity-50" />
+                      </div>
+                      <p className="text-[11px] text-gray-600 font-bold uppercase tracking-widest italic">Chưa có thông tin liên hệ</p>
                     </div>
                   )}
                 </div>
                 
                 {/* Footer decoration */}
-                <div className="h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+                <div className="p-3 bg-black/20 text-center shrink-0">
+                  <span className="text-[8px] font-bold text-gray-600 uppercase tracking-widest">{APP_CONFIG.appName} © 2024</span>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
           
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
             onClick={() => setShowTeamInfo(!showTeamInfo)}
             className={cn(
-              "w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_10px_30px_rgba(0,0,0,0.3)] transition-all duration-500",
+              "w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_12px_40px_rgba(0,0,0,0.4)] transition-all duration-500",
               showTeamInfo 
                 ? "bg-primary text-white rotate-90 rounded-full" 
                 : "bg-[var(--sidebar-app)] text-primary border border-[var(--border-app)] hover:border-primary hover:shadow-primary/20"
